@@ -277,8 +277,18 @@ def export_to_csv(municipalities_data: list, output_filename: str):
                 if party_number not in all_parties:
                     all_parties[party_number] = party_info[PARTY_NAME_KEY]
 
-    # Step 2: Sort parties by their numbers
-    sorted_parties = sorted(all_parties.items(), key=lambda x: int(x[0]))
+    # Step 2: Sort parties by their numbers using a simple loop
+    temp_list_to_sort = []
+    for party_number_text, party_name in all_parties.items():
+        temp_list_to_sort.append(
+            (int(party_number_text), (party_number_text, party_name))
+        )
+
+    temp_list_to_sort.sort()
+
+    sorted_parties = []
+    for number, original_item in temp_list_to_sort:
+        sorted_parties.append(original_item)
 
     # Step 3: Create flat data structure for CSV
     csv_data = []
