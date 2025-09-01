@@ -41,10 +41,10 @@ python main.py "URL_ADRESA" "NAZEV_SOUBORU.csv"
 
 ### Ukázka běhu programu
 
-Pro zpracování dat okesu Prostějov zadejte následující údaje:
+Pro zpracování dat okresu Prostějov zadejte následující údaje:
 
-První argument: `https://www.volby.cz/pls/ps2017nss/ps32?xjazyk=CZ&xkraj=12&xnumnuts=7103`
-Druhý argument: `vysledky.csv`
+- První argument: `https://www.volby.cz/pls/ps2017nss/ps32?xjazyk=CZ&xkraj=12&xnumnuts=7103`
+- Druhý argument: `vysledky.csv`
 #### Spuštění programu z příkazové řádky:
 ```bash
 python main.py "https://www.volby.cz/pls/ps2017nss/ps32?xjazyk=CZ&xkraj=12&xnumnuts=7103" "vysledky.csv"
@@ -68,13 +68,13 @@ Program úspěšně dokončen.
 
 Výstupní soubor obsahuje tyto sloupce:
 
-| Sloupec | Popis |
-|---------|-------|
-| `code` | Kód obce |
-| `location` | Název obce |
-| `registered` | Počet registrovaných voličů |
-| `envelopes` | Počet vydaných obálek |
-| `valid` | Počet platných hlasů |
+| Sloupec          | Popis                                       |
+| ---------------- | ------------------------------------------- |
+| `code`           | Kód obce                                    |
+| `location`       | Název obce                                  |
+| `registered`     | Počet registrovaných voličů                 |
+| `envelopes`      | Počet vydaných obálek                       |
+| `valid`          | Počet platných hlasů                        |
 | `[Název strany]` | Počet hlasů pro jednotlivé politické strany |
 
 ### Ukázka výstupního souboru

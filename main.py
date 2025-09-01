@@ -12,12 +12,12 @@ It downloads municipality data, extracts voter statistics and party results,
 then exports all data to a CSV file for analysis.
 """
 
-import argparse
 import requests
+import argparse
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
-import pandas as pd
 from tqdm import tqdm
+import pandas as pd
 
 # HTML parsing constants
 HTML_PARSER = 'lxml'
@@ -82,11 +82,11 @@ def get_soup_from_url(url: str) -> BeautifulSoup | None:
         # Download the webpage
         response = requests.get(url)
         response.raise_for_status()  # Raise an error for bad status codes
-        
+
         # Parse HTML content
         soup = BeautifulSoup(response.text, HTML_PARSER)
         return soup
-    
+
     except requests.exceptions.RequestException as error:
         print(f"  -> CHYBA: Nepodařilo se stáhnout stránku: {error}")
         return None
@@ -112,13 +112,14 @@ def clean_number(text: str) -> int:
     # Check if text is empty or None
     if not text:
         return DEFAULT_VOTES
-    
+
     try:
         # Remove all types of spaces and convert to integer
-        cleaned_text = text.replace(NON_BREAKING_SPACE, '').replace(REGULAR_SPACE, '')
+        cleaned_text = text.replace(
+            NON_BREAKING_SPACE, '').replace(REGULAR_SPACE, '')
         number = int(cleaned_text)
         return number
-    
+
     except (ValueError, TypeError):
         # Return 0 if conversion fails
         return DEFAULT_VOTES
@@ -143,7 +144,7 @@ def scrape_municipalities_list(main_page_soup: BeautifulSoup, base_url: str) -> 
         >>> print(f"Found {len(municipalities)} municipalities")
     """
     municipalities = []  # List to store municipality data
-    
+
     # Find all table rows in the main table
     table_rows = main_page_soup.select(MAIN_TABLE_SELECTOR)
 
@@ -165,7 +166,7 @@ def scrape_municipalities_list(main_page_soup: BeautifulSoup, base_url: str) -> 
             if href and code and name:
                 # Create full URL for municipality detail page
                 full_link = urljoin(base_url, href)
-                
+
                 # Add municipality data to list
                 municipality_data = {
                     CODE_COLUMN: code,
@@ -173,7 +174,7 @@ def scrape_municipalities_list(main_page_soup: BeautifulSoup, base_url: str) -> 
                     'link': full_link
                 }
                 municipalities.append(municipality_data)
-    
+
     print(f"Nalezeno {len(municipalities)} obcí ke zpracování.")
     return municipalities
 
@@ -218,22 +219,24 @@ def scrape_one_place_details(detail_soup: BeautifulSoup) -> dict | None:
 
     # Find all tables containing party results
     result_tables = detail_soup.select(PARTY_RESULTS_CONTAINER_SELECTOR)
-    
+
     # Process each table
     for table_container in result_tables:
         table = table_container.find('table')
         if not table:
             continue  # Skip if no table found
-        
+
         # Process each row in the table (skip header row)
-        table_rows = table.find_all('tr')[HEADER_ROW_INDEX:]  # Skip first row (header)
-        
+        # Skip first row (header)
+        table_rows = table.find_all('tr')[HEADER_ROW_INDEX:]
+
         for row in table_rows:
             cells = row.find_all('td')
-            
+
             # Check if row has enough cells (party number, name, votes)
             if len(cells) >= MIN_CELLS_PER_ROW:
-                party_number = cells[PARTY_NUMBER_CELL_INDEX].get_text(strip=True)
+                party_number = cells[PARTY_NUMBER_CELL_INDEX].get_text(
+                    strip=True)
                 party_name = cells[PARTY_NAME_CELL_INDEX].get_text(strip=True)
                 votes_text = cells[PARTY_VOTES_CELL_INDEX].get_text(strip=True)
                 votes = clean_number(votes_text)
@@ -267,7 +270,7 @@ def export_to_csv(municipalities_data: list, output_filename: str):
 
     # Step 1: Collect all unique political parties from all municipalities
     all_parties = {}  # Dictionary to store party number -> party name
-    
+
     for municipality in municipalities_data:
         if 'parties' in municipality and municipality['parties']:
             for party_number, party_info in municipality['parties'].items():
@@ -279,28 +282,29 @@ def export_to_csv(municipalities_data: list, output_filename: str):
 
     # Step 3: Create flat data structure for CSV
     csv_data = []
-    base_columns = [CODE_COLUMN, LOCATION_COLUMN, REGISTERED_COLUMN, ENVELOPES_COLUMN, VALID_COLUMN]
+    base_columns = [CODE_COLUMN, LOCATION_COLUMN,
+                    REGISTERED_COLUMN, ENVELOPES_COLUMN, VALID_COLUMN]
 
     for municipality in municipalities_data:
         # Start with basic municipality data
         csv_row = {}
-        
+
         # Add basic information
         for column in base_columns:
             csv_row[column] = municipality.get(column, DEFAULT_VALUE)
-        
+
         # Add vote counts for each party
         for party_number, party_name in sorted_parties:
             votes = DEFAULT_VOTES  # Default to 0 votes
-            
+
             # Get actual votes if party exists in this municipality
-            if ('parties' in municipality and 
-                municipality['parties'] and 
-                party_number in municipality['parties']):
+            if ('parties' in municipality and
+                municipality['parties'] and
+                    party_number in municipality['parties']):
                 votes = municipality['parties'][party_number][PARTY_VOTES_KEY]
-            
+
             csv_row[party_name] = votes
-        
+
         csv_data.append(csv_row)
 
     # Step 4: Create DataFrame and save to CSV
@@ -341,15 +345,15 @@ def main():
         ),
         formatter_class=argparse.RawTextHelpFormatter
     )
-    
+
     # Define required arguments
-    parser.add_argument("url", 
-                       help="URL adresa územního celku (v uvozovkách).", 
-                       type=str)
-    parser.add_argument("filename", 
-                       help="Název výstupního CSV souboru (v uvozovkách).", 
-                       type=str)
-    
+    parser.add_argument("url",
+                        help="URL adresa územního celku (v uvozovkách).",
+                        type=str)
+    parser.add_argument("filename",
+                        help="Název výstupního CSV souboru (v uvozovkách).",
+                        type=str)
+
     # Parse arguments from command line
     arguments = parser.parse_args()
 
@@ -363,14 +367,14 @@ def main():
     # Step 2: Extract list of all municipalities
     print("Získávám seznam obcí...")
     municipalities = scrape_municipalities_list(main_page_soup, arguments.url)
-    
+
     if not municipalities:
         print("Nebyly nalezeny žádné obce. Ukončuji program.")
         return
 
     # Step 3: Download detailed data for each municipality
     print("--- Zahajuji stahování detailů pro všechny obce ---")
-    
+
     for municipality in tqdm(municipalities, desc=PROGRESS_DESC, unit=PROGRESS_UNIT):
         # Download detail page for this municipality
         detail_soup = get_soup_from_url(municipality['link'])
